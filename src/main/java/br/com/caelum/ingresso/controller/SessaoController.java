@@ -1,5 +1,7 @@
 package br.com.caelum.ingresso.controller;
 
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import br.com.caelum.ingresso.dao.SalaDao;
 import br.com.caelum.ingresso.dao.SessaoDao;
 import br.com.caelum.ingresso.model.Sessao;
 import br.com.caelum.ingresso.model.SessaoForm;
+import br.com.caelum.ingresso.validacao.GerenciadorDeSessao;
 
 @Controller
 public class SessaoController {
@@ -24,36 +27,36 @@ public class SessaoController {
 	private SalaDao salaDao;
 	@Autowired
 	private FilmeDao filmeDao;
-	
+
 	@Autowired
 	private SessaoDao sessaoDao;
-	
+
 	@GetMapping("/admin/sessao")
-	public ModelAndView form (@RequestParam("salaId") Integer salaId, SessaoForm form){
-		
+	public ModelAndView form(@RequestParam("salaId") Integer salaId, SessaoForm form) {
+
 		form.setSalaId(salaId);
 		ModelAndView modelAndView = new ModelAndView("sessao/sessao");
-		
+
 		modelAndView.addObject("sala", salaDao.findOne(salaId));
 		modelAndView.addObject("filmes", filmeDao.findAll());
 		modelAndView.addObject("form", form);
-		
+
 		return modelAndView;
-		
+
 	}
-	
-	@PostMapping(value = "/admin/sessao")
+
+	@PostMapping("/admin/sessao")
 	@Transactional
-	public ModelAndView salva(@Valid SessaoForm form, BindingResult result){
-		
-		if(result.hasErrors())return form(form.getSalaId(),form);
-		ModelAndView modelAndView = new ModelAndView("redirect:/admin/sala/"+form.getSalaId()+"/sessoes");
-		
+	public ModelAndView salva(@Valid SessaoForm form, BindingResult result) {
+		if (result.hasErrors())
+			return form(form.getSalaId(), form);
 		Sessao sessao = form.toSessao(salaDao, filmeDao);
-		
-		sessaoDao.save(sessao);
-		
-		return modelAndView;
+		List<Sessao> sessoesDaSala = sessaoDao.buscaSessaoDaSala(sessao.getSala());
+		GerenciadorDeSessao gerenciador = new GerenciadorDeSessao(sessoesDaSala);
+		if (gerenciador.cabe(sessao)) {
+			sessaoDao.save(sessao);
+			return new ModelAndView("redirect:/admin/sala/" + form.getSalaId() + "/sessoes");
+		}
+		return form(form.getSalaId(), form);
 	}
-	
 }
