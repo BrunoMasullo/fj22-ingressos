@@ -32,7 +32,7 @@ public class SessaoController {
 	public ModelAndView form (@RequestParam("salaId") Integer salaId, SessaoForm form){
 		
 		form.setSalaId(salaId);
-		ModelAndView modelAndView = new ModelAndView("admin/sessao");
+		ModelAndView modelAndView = new ModelAndView("sessao/sessao");
 		
 		modelAndView.addObject("sala", salaDao.findOne(salaId));
 		modelAndView.addObject("filmes", filmeDao.findAll());
@@ -47,7 +47,7 @@ public class SessaoController {
 	public ModelAndView salva(@Valid SessaoForm form, BindingResult result){
 		
 		if(result.hasErrors())return form(form.getSalaId(),form);
-		ModelAndView modelAndView = new ModelAndView("redrect:/admin/sala/"+form.getSalaId()+"sessoes");
+		ModelAndView modelAndView = new ModelAndView("redirect:/admin/sala/"+form.getSalaId()+"/sessoes");
 		
 		Sessao sessao = form.toSessao(salaDao, filmeDao);
 		
